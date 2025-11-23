@@ -14,9 +14,9 @@ import {
   Search, 
   User, 
   LogIn, 
-  UserPlus,
   GraduationCap,
-  LayoutDashboard
+  LayoutDashboard,
+  Trophy
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 
@@ -25,6 +25,15 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  
+  // SAFE FIX: Extract courseId from URL string instead of using useParams()
+  // This prevents the "Maximum call stack size exceeded" error
+  const courseIdMatch = pathname?.match(/^\/courses\/(\d+)/)
+  const courseId = courseIdMatch ?[1] : null
+
+  // Logic: If inside a course, go to THAT course's practice.
+  // If anywhere else (Home, Profile, etc), go to the Global Practice Hub.
+  const practiceHref = courseId ? `/courses/${courseId}/practice` : '/practice'
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,7 +71,7 @@ export default function Navbar() {
             <span className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">Edvancea</span>
           </Link>
 
-          {/* Search Bar - Visible on Tablet+ (md) */}
+          {/* Search Bar */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
             <form onSubmit={handleSearch} className="w-full relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -96,9 +105,21 @@ export default function Navbar() {
 
           {/* Right side items */}
           <div className="flex items-center space-x-2 ml-4">
+            {/* Practice Button - Always Visible */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:flex gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950 transition-colors" 
+              asChild
+            >
+              <Link href={practiceHref}>
+                <Trophy className="w-4 h-4" />
+                Practice
+              </Link>
+            </Button>
+
             <ThemeToggle />
             
-            {/* Desktop Auth */}
             <div className="hidden md:flex items-center space-x-2">
               {user ? (
                 <Link href="/profile">
@@ -120,7 +141,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Mobile Menu Trigger - Now correctly placed */}
+            {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="sm" className="px-2">
@@ -130,7 +151,6 @@ export default function Navbar() {
               <SheetContent side="right" className="w-80">
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex flex-col h-full pt-4">
-                  {/* Mobile Search */}
                   <form onSubmit={handleSearch} className="mb-6">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -144,7 +164,6 @@ export default function Navbar() {
                     </div>
                   </form>
 
-                  {/* Mobile Navigation Links */}
                   <nav className="space-y-2 flex-1">
                     {navItems.map((item) => (
                       <Link
@@ -160,9 +179,17 @@ export default function Navbar() {
                         <span>{item.label}</span>
                       </Link>
                     ))}
+
+                    {/* Mobile Practice Button */}
+                    <Link
+                      href={practiceHref}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 transition-colors"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      <span>Practice Mode</span>
+                    </Link>
                   </nav>
 
-                  {/* Mobile Auth */}
                   <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
                     {user ? (
                       <>

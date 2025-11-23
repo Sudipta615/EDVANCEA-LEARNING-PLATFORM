@@ -2,89 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { BookOpen, CheckCircle, Play, ChevronRight, List, FileText, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { BookOpen, CheckCircle, Play, ChevronRight, List, CheckCircle2 } from 'lucide-react'
 import Navbar from '@/components/navbar'
 import { useAuth } from '@/lib/auth'
 import { useProgress } from '@/lib/progress'
+import { Course } from '@/lib/courseData'
 
-// Extended course data matching the lesson content we will create
-const courseData = {
-  1: {
-    id: 1,
-    title: "Excel Mastery: From Zero to Hero",
-    category: "Excel",
-    description: "Complete Excel training from basic formulas to advanced data analysis and automation",
-    fullDescription: "Master Microsoft Excel from the ground up with this comprehensive course. Starting with basic navigation and formulas, you'll progress through advanced topics like PivotTables, Power Query, and VBA programming.",
-    level: "Beginner",
-    lessons: 42,
-    image: "📊",
-    lastUpdated: "2024-01-15",
-    language: "English",
-    modules: [
-      {
-        id: 1,
-        title: "Excel Fundamentals",
-        lessons: [
-          { id: '1', title: "Getting Started with Excel" },
-          { id: '2', title: "Understanding the Ribbon" },
-          { id: '3', title: "Basic Navigation" },
-          { id: '4', title: "Saving and Managing Files" },
-          { id: '5', title: "Basic Formulas" }
-        ]
-      },
-      {
-        id: 2,
-        title: "Essential Functions",
-        lessons: [
-          { id: '6', title: "Mathematical Functions" },
-          { id: '7', title: "Text Functions" }
-        ]
-      }
-      // Additional modules would go here...
-    ]
-  },
-  // We keep other courses minimal for now to prevent file size bloat, 
-  // but the logic applies to all if data is added.
-  2: { id: 2, title: "Financial Modeling Fundamentals", category: "Finance", level: "Intermediate", lessons: 36, image: "💰", modules: [] },
-  3: { id: 3, title: "PowerPoint Pro", category: "PowerPoint", level: "Beginner", lessons: 28, image: "📽️", modules: [] },
-  4: { id: 4, title: "Video Editing Essentials", category: "Video Editing", level: "Beginner", lessons: 48, image: "🎬", modules: [] }
+interface CourseDetailPageProps {
+  course: Course;
 }
 
-export default function CourseDetailPage() {
-  const params = useParams()
-  const router = useRouter()
+export default function CourseDetailPage({ course }: CourseDetailPageProps) {
   const { user } = useAuth()
   const { isLessonComplete, getCourseProgress } = useProgress()
   const [mounted, setMounted] = useState(false)
   
-  const courseId = parseInt(params.id as string)
-  const course = courseData[courseId as keyof typeof courseData]
-
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!course) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="text-center animate-scale-in">
-          <h1 className="text-2xl font-bold mb-4">Course Not Found</h1>
-          <Button onClick={() => router.push('/courses')}>Back to Courses</Button>
-        </div>
-      </div>
-    )
-  }
-
-  // Only calculate progress if we have module data, otherwise fallback
   const totalLessons = course.modules.reduce((acc, module) => acc + module.lessons.length, 0) || course.lessons
   const courseProgress = mounted && user ? getCourseProgress(course.id.toString(), totalLessons) : { completed: 0, total: totalLessons, percentage: 0 }
 
-  // Find first incomplete lesson to "Continue"
   let nextLessonId = null;
   if (course.modules.length > 0) {
     for (const module of course.modules) {
@@ -96,7 +39,6 @@ export default function CourseDetailPage() {
       }
       if (nextLessonId) break;
     }
-    // If all complete, default to first
     if (!nextLessonId && course.modules[0]?.lessons[0]) {
       nextLessonId = course.modules[0].lessons[0].id;
     }
@@ -132,15 +74,20 @@ export default function CourseDetailPage() {
                 {course.description}
               </p>
 
-              <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <BookOpen className="w-4 h-4 mr-2 text-primary" />
-                  {course.lessons} Lessons
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
-                  Text-Based Learning
-                </div>
+              <div className="flex flex-wrap gap-4">
+                {/* START LEARNING BUTTON */}
+                {nextLessonId ? (
+                  <Button size="lg" className="text-lg h-12 shadow-md px-8" asChild>
+                    <Link href={`/courses/${course.id}/${nextLessonId}`}>
+                      {user && courseProgress.percentage > 0 ? 'Continue Learning' : 'Start Learning'}
+                      <Play className="ml-2 w-5 h-5 fill-current" />
+                    </Link>
+                  </Button>
+                ) : (
+                   <Button size="lg" className="text-lg h-12" disabled>
+                      Coming Soon
+                   </Button>
+                )}
               </div>
             </div>
             
@@ -157,18 +104,16 @@ export default function CourseDetailPage() {
                     </div>
                   )}
                   
-                  {nextLessonId ? (
-                    <Button size="lg" className="w-full text-lg h-12 shadow-md" asChild>
-                      <Link href={`/courses/${course.id}/${nextLessonId}`}>
-                        {user && courseProgress.percentage > 0 ? 'Continue Learning' : 'Start Learning'}
-                        <Play className="ml-2 w-5 h-5 fill-current" />
-                      </Link>
-                    </Button>
-                  ) : (
-                     <Button size="lg" className="w-full text-lg h-12" disabled>
-                        Coming Soon
-                     </Button>
-                  )}
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <BookOpen className="w-4 h-4 mr-2 text-primary" />
+                      {course.lessons} Lessons
+                    </div>
+                    <div className="flex items-center">
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
+                      Text-Based Learning
+                    </div>
+                  </div>
                 </CardHeader>
                 
                 <CardContent className="space-y-4 text-sm">
@@ -210,7 +155,6 @@ export default function CourseDetailPage() {
                     </div>
                     <div className="divide-y divide-border/50">
                       {module.lessons.map((lesson, lessonIndex) => {
-                        // Only access hooks if mounted to prevent hydration mismatch
                         const isCompleted = mounted && user ? isLessonComplete(course.id.toString(), lesson.id) : false
                         
                         return (
