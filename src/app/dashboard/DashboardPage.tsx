@@ -1,3 +1,4 @@
+// src/app/dashboard/DashboardPage.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,64 +8,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BookOpen, CheckCircle, PlayCircle, Award, TrendingUp } from 'lucide-react'
+import { BookOpen, CheckCircle, PlayCircle, Award, TrendingUp, Loader2 } from 'lucide-react'
 import Navbar from '@/components/navbar'
 import { useAuth } from '@/lib/auth'
 import { useProgress } from '@/lib/progress'
-import { useRouter } from 'next/navigation'
-
-// We use the same static course definition to map IDs to details
-const allCourses = [
-  {
-    id: 1,
-    title: "Excel Mastery: From Zero to Hero",
-    category: "Excel",
-    totalLessons: 42, // This must match the data in course pages
-    image: "📊",
-    description: "Complete Excel training from basic formulas to advanced data analysis."
-  },
-  {
-    id: 2,
-    title: "Financial Modeling Fundamentals",
-    category: "Finance",
-    totalLessons: 36,
-    image: "💰",
-    description: "Build professional financial models from scratch."
-  },
-  {
-    id: 3,
-    title: "PowerPoint Pro",
-    category: "PowerPoint",
-    totalLessons: 28,
-    image: "📽️",
-    description: "Create stunning presentations that captivate audiences."
-  },
-  {
-    id: 4,
-    title: "Video Editing Essentials",
-    category: "Video Editing",
-    totalLessons: 48,
-    image: "🎬",
-    description: "Edit professional videos using industry-standard tools."
-  }
-]
+import { courseData } from '@/lib/courseData'
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
   const { getCourseProgress, getOverallProgress } = useProgress()
-  const router = useRouter()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    if (!user) {
-      // Optional: Redirect if strictly protected, or show login prompt
-      // router.push('/login') 
-    }
-  }, [user, router])
+  }, [])
 
-  if (!mounted) return null
+  if (!mounted || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   if (!user) {
     return (
@@ -82,14 +48,12 @@ export default function DashboardPage() {
 
   const overall = getOverallProgress()
   
-  // Filter courses where the user has at least started (progress > 0)
-  // or just show all enrolled courses. For this demo, we show all.
-  const myCourses = allCourses.map(course => {
-    const progress = getCourseProgress(course.id.toString(), course.totalLessons)
+  // Use data from source of truth
+  const myCourses = Object.values(courseData).map(course => {
+    const progress = getCourseProgress(course.id.toString(), course.lessons)
     return { ...course, ...progress }
   })
 
-  // Sort by last accessed or progress could be added here
   const inProgressCourses = myCourses.filter(c => c.percentage > 0 && c.percentage < 100)
   const completedCourses = myCourses.filter(c => c.percentage === 100)
 
@@ -190,7 +154,7 @@ export default function DashboardPage() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold truncate">{course.title}</h3>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                              <span>{course.completed} / {course.totalLessons} lessons</span>
+                              <span>{course.completed} / {course.lessons} lessons</span>
                               <span className="hidden sm:inline">•</span>
                               <span className="hidden sm:inline">{course.category}</span>
                             </div>
@@ -216,7 +180,6 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-center mb-6 relative">
-                      {/* Simple Circular Progress Visualization */}
                       <div className="w-32 h-32 rounded-full border-8 border-secondary flex items-center justify-center relative">
                         <div className="text-center">
                           <div className="text-3xl font-bold">{overall.percentage}%</div>
@@ -273,7 +236,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex justify-between items-center pt-2">
                         <span className="text-sm text-muted-foreground">
-                          {course.completed}/{course.totalLessons} lessons
+                          {course.completed}/{course.lessons} lessons
                         </span>
                         <Button size="sm" asChild>
                           <Link href={`/courses/${course.id}`}>
