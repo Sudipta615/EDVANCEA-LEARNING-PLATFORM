@@ -1,167 +1,117 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BookOpen, Clock, Star, Award, TrendingUp, Calendar, PlayCircle, CheckCircle, BarChart3, Users, Target, Flame } from 'lucide-react'
+import { BookOpen, CheckCircle, PlayCircle, Award, TrendingUp } from 'lucide-react'
 import Navbar from '@/components/navbar'
 import { useAuth } from '@/lib/auth'
 import { useProgress } from '@/lib/progress'
 import { useRouter } from 'next/navigation'
 
-const enrolledCourses = [
+// We use the same static course definition to map IDs to details
+const allCourses = [
   {
     id: 1,
     title: "Excel Mastery: From Zero to Hero",
     category: "Excel",
+    totalLessons: 42, // This must match the data in course pages
     image: "📊",
-    totalLessons: 42,
-    lastAccessed: "2024-01-25",
-    nextLesson: "Introduction to Power Query",
-    nextLessonId: "22",
-    estimatedRemaining: "4h 20m"
-  },
-  {
-    id: 3,
-    title: "Financial Modeling Fundamentals",
-    category: "Finance",
-    image: "💰",
-    totalLessons: 36,
-    lastAccessed: "2024-01-23",
-    nextLesson: "Building DCF Models",
-    nextLessonId: "15",
-    estimatedRemaining: "8h 45m"
-  }
-]
-
-const achievements = [
-  {
-    id: 1,
-    title: "Fast Learner",
-    description: "Complete 5 lessons in one day",
-    icon: "🚀",
-    earned: true,
-    date: "2024-01-20"
+    description: "Complete Excel training from basic formulas to advanced data analysis."
   },
   {
     id: 2,
-    title: "Excel Beginner",
-    description: "Complete first Excel module",
-    icon: "📊",
-    earned: true,
-    date: "2024-01-18"
+    title: "Financial Modeling Fundamentals",
+    category: "Finance",
+    totalLessons: 36,
+    image: "💰",
+    description: "Build professional financial models from scratch."
   },
   {
     id: 3,
-    title: "Dedicated Student",
-    description: "7-day learning streak",
-    icon: "🔥",
-    earned: false,
-    progress: 5
+    title: "PowerPoint Pro",
+    category: "PowerPoint",
+    totalLessons: 28,
+    image: "📽️",
+    description: "Create stunning presentations that captivate audiences."
   },
   {
     id: 4,
-    title: "Course Master",
-    description: "Complete your first course",
-    icon: "🎓",
-    earned: false,
-    progress: 65
+    title: "Video Editing Essentials",
+    category: "Video Editing",
+    totalLessons: 48,
+    image: "🎬",
+    description: "Edit professional videos using industry-standard tools."
   }
 ]
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { getCourseProgress, getOverallProgress } = useProgress()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     if (!user) {
-      router.push('/login')
-      return
+      // Optional: Redirect if strictly protected, or show login prompt
+      // router.push('/login') 
     }
   }, [user, router])
 
+  if (!mounted) return null
+
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center animate-fade-in-up">
+          <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
+          <p className="text-muted-foreground mb-6">You need to be logged in to view your dashboard.</p>
+          <Button asChild>
+            <Link href="/login">Log In</Link>
+          </Button>
         </div>
       </div>
     )
   }
 
-  const overallProgress = getOverallProgress()
-  const learningStats = {
-    totalCourses: enrolledCourses.length,
-    completedCourses: 0,
-    totalLessons: enrolledCourses.reduce((acc, course) => acc + course.totalLessons, 0),
-    completedLessons: overallProgress.completed,
-    totalTime: "18h 50m",
-    streak: 5,
-    certificates: 0
-  }
+  const overall = getOverallProgress()
+  
+  // Filter courses where the user has at least started (progress > 0)
+  // or just show all enrolled courses. For this demo, we show all.
+  const myCourses = allCourses.map(course => {
+    const progress = getCourseProgress(course.id.toString(), course.totalLessons)
+    return { ...course, ...progress }
+  })
 
-  const recentActivity = [
-    {
-      id: 1,
-      type: "lesson_completed",
-      title: "Completed: Basic Formulas",
-      course: "Excel Mastery",
-      time: "2 hours ago",
-      icon: <CheckCircle className="w-4 h-4 text-green-500" />
-    },
-    {
-      id: 2,
-      type: "lesson_started",
-      title: "Started: Power Query Introduction",
-      course: "Excel Mastery",
-      time: "1 day ago",
-      icon: <PlayCircle className="w-4 h-4 text-blue-500" />
-    },
-    {
-      id: 3,
-      type: "achievement_earned",
-      title: "Earned: Fast Learner",
-      course: null,
-      time: "3 days ago",
-      icon: <Award className="w-4 h-4 text-yellow-500" />
-    },
-    {
-      id: 4,
-      type: "course_enrolled",
-      title: "Enrolled: Financial Modeling",
-      course: "Financial Modeling Fundamentals",
-      time: "1 week ago",
-      icon: <BookOpen className="w-4 h-4 text-purple-500" />
-    }
-  ]
+  // Sort by last accessed or progress could be added here
+  const inProgressCourses = myCourses.filter(c => c.percentage > 0 && c.percentage < 100)
+  const completedCourses = myCourses.filter(c => c.percentage === 100)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-background selection:bg-primary/20">
       <Navbar />
       
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Welcome back, {user.name}!</h1>
-              <p className="text-slate-600 dark:text-slate-300 mt-1">Continue your learning journey</p>
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="animate-fade-in-up">
+              <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}!</h1>
+              <p className="text-muted-foreground mt-1">Track your progress and continue learning.</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="text-sm text-slate-600 dark:text-slate-400">Current Streak</div>
-                <div className="text-2xl font-bold text-orange-500">🔥 {learningStats.streak} days</div>
+            <div className="flex items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="text-right hidden sm:block">
+                <div className="text-sm text-muted-foreground">Total Progress</div>
+                <div className="text-2xl font-bold text-primary">{overall.percentage}%</div>
               </div>
-              <Button asChild>
-                <Link href="/courses">Browse Courses</Link>
+              <Button asChild size="lg" className="hover-lift">
+                <Link href="/courses">Explore Courses</Link>
               </Button>
             </div>
           </div>
@@ -170,129 +120,91 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <Card className="hover-lift border-l-4 border-l-primary">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Courses</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{learningStats.totalCourses}</p>
+                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                  <p className="text-2xl font-bold text-foreground">{inProgressCourses.length}</p>
                 </div>
-                <BookOpen className="w-8 h-8 text-blue-500" />
+                <BookOpen className="w-8 h-8 text-primary opacity-80" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="hover-lift border-l-4 border-l-success">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Completed</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{learningStats.completedLessons}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold text-foreground">{overall.completed}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <CheckCircle className="w-8 h-8 text-success opacity-80" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="hover-lift border-l-4 border-l-accent">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Learning Time</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{learningStats.totalTime}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Certificates</p>
+                  <p className="text-2xl font-bold text-foreground">{completedCourses.length}</p>
                 </div>
-                <Clock className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Certificates</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{learningStats.certificates}</p>
-                </div>
-                <Award className="w-8 h-8 text-yellow-500" />
+                <Award className="w-8 h-8 text-accent opacity-80" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="courses">My Courses</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="courses">All Courses</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 animate-fade-in-up">
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      Continue Learning
-                      <Badge variant="outline">{overallProgress.percentage}% Complete</Badge>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      Active Courses
                     </CardTitle>
                     <CardDescription>Pick up where you left off</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {enrolledCourses.map((course) => {
-                      const progress = getCourseProgress(course.id.toString(), course.totalLessons)
-                      
-                      return (
-                        <div key={course.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                          <div className="text-3xl">{course.image}</div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-white">{course.title}</h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Next: {course.nextLesson}</p>
-                            <div className="flex items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
-                              <span>{progress.completed}/{course.totalLessons} lessons</span>
-                              <span>•</span>
-                              <span>{course.estimatedRemaining} remaining</span>
+                    {inProgressCourses.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>You haven't started any courses yet.</p>
+                        <Button variant="link" asChild className="mt-2">
+                          <Link href="/courses">Browse Catalog</Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      inProgressCourses.map((course) => (
+                        <div key={course.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-secondary/10 transition-colors">
+                          <div className="text-3xl p-2 bg-secondary/20 rounded-md">{course.image}</div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{course.title}</h3>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                              <span>{course.completed} / {course.totalLessons} lessons</span>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="hidden sm:inline">{course.category}</span>
                             </div>
-                            <Progress value={progress.percentage} className="mt-2 h-2" />
+                            <Progress value={course.percentage} className="mt-3 h-1.5" />
                           </div>
-                          <Button asChild>
-                            <Link href={`/courses/${course.id}/${course.nextLessonId}`}>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/courses/${course.id}`}>
                               <PlayCircle className="w-4 h-4 mr-2" />
                               Resume
                             </Link>
                           </Button>
                         </div>
-                      )
-                    })}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Learning Progress</CardTitle>
-                    <CardDescription>Your overall learning journey</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span>Overall Progress</span>
-                          <span>{overallProgress.percentage}%</span>
-                        </div>
-                        <Progress value={overallProgress.percentage} className="h-3" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-slate-600 dark:text-slate-400">Total Time This Week</div>
-                          <div className="font-semibold text-slate-900 dark:text-white">4h 25m</div>
-                        </div>
-                        <div>
-                          <div className="text-slate-600 dark:text-slate-400">Lessons Completed</div>
-                          <div className="font-semibold text-slate-900 dark:text-white">12</div>
-                        </div>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -300,142 +212,80 @@ export default function DashboardPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Achievements</CardTitle>
+                    <CardTitle>Overall Progress</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    {achievements.filter(a => a.earned).slice(0, 3).map((achievement) => (
-                      <div key={achievement.id} className="flex items-center space-x-3">
-                        <div className="text-2xl">{achievement.icon}</div>
-                        <div className="flex-1">
-                          <div className="font-medium text-slate-900 dark:text-white">{achievement.title}</div>
-                          <div className="text-xs text-slate-600 dark:text-slate-400">{achievement.date}</div>
+                  <CardContent>
+                    <div className="flex justify-center mb-6 relative">
+                      {/* Simple Circular Progress Visualization */}
+                      <div className="w-32 h-32 rounded-full border-8 border-secondary flex items-center justify-center relative">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold">{overall.percentage}%</div>
+                          <div className="text-xs text-muted-foreground">Complete</div>
                         </div>
+                        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="46"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="8"
+                            strokeDasharray="289"
+                            strokeDashoffset={289 - (289 * overall.percentage) / 100}
+                            className="text-primary transition-all duration-1000 ease-out"
+                          />
+                        </svg>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Learning Goals</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">Weekly Target</span>
-                      <span className="text-sm font-medium">5h / 7h</span>
                     </div>
-                    <Progress value={71} className="h-2" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">Monthly Target</span>
-                      <span className="text-sm font-medium">18h / 20h</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Lessons Completed</span>
+                        <span className="font-medium">{overall.completed}</span>
+                      </div>
                     </div>
-                    <Progress value={90} className="h-2" />
                   </CardContent>
                 </Card>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="courses" className="space-y-6">
+          <TabsContent value="courses" className="animate-fade-in-up">
             <div className="grid md:grid-cols-2 gap-6">
-              {enrolledCourses.map((course) => {
-                const progress = getCourseProgress(course.id.toString(), course.totalLessons)
-                
-                return (
-                  <Card key={course.id}>
-                    <CardHeader>
-                      <div className="flex items-center space-x-3">
-                        <div className="text-3xl">{course.image}</div>
-                        <div>
-                          <CardTitle className="text-lg">{course.title}</CardTitle>
-                          <Badge variant="secondary">{course.category}</Badge>
-                        </div>
+              {myCourses.map((course) => (
+                <Card key={course.id} className="hover-lift">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl p-2 bg-secondary/20 rounded-lg">{course.image}</div>
+                      <div>
+                        <CardTitle className="text-lg">{course.title}</CardTitle>
+                        <Badge variant="outline" className="mt-1">{course.category}</Badge>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
                       <div>
                         <div className="flex justify-between text-sm mb-2">
-                          <span>Progress</span>
-                          <span>{progress.percentage}%</span>
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-medium">{course.percentage}%</span>
                         </div>
-                        <Progress value={progress.percentage} className="h-2" />
+                        <Progress value={course.percentage} className="h-2" />
                       </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-slate-600 dark:text-slate-400">Lessons</div>
-                          <div className="font-medium">{progress.completed}/{course.totalLessons}</div>
-                        </div>
-                        <div>
-                          <div className="text-slate-600 dark:text-slate-400">Last Accessed</div>
-                          <div className="font-medium">{course.lastAccessed}</div>
-                        </div>
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-sm text-muted-foreground">
+                          {course.completed}/{course.totalLessons} lessons
+                        </span>
+                        <Button size="sm" asChild>
+                          <Link href={`/courses/${course.id}`}>
+                            {course.percentage > 0 ? 'Continue' : 'Start'}
+                          </Link>
+                        </Button>
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        <div>Next: {course.nextLesson}</div>
-                        <div>Est. remaining: {course.estimatedRemaining}</div>
-                      </div>
-                      <Button className="w-full" asChild>
-                        <Link href={`/courses/${course.id}/${course.nextLessonId}`}>
-                          Continue Learning
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="achievements" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {achievements.map((achievement) => (
-                <Card key={achievement.id} className={`${achievement.earned ? 'bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800' : 'opacity-75'}`}>
-                  <CardHeader className="text-center">
-                    <div className="text-5xl mb-2">{achievement.icon}</div>
-                    <CardTitle className="text-lg">{achievement.title}</CardTitle>
-                    <CardDescription>{achievement.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    {achievement.earned ? (
-                      <div className="space-y-2">
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Earned</Badge>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">{achievement.date}</div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="text-sm text-slate-600 dark:text-slate-400">In Progress</div>
-                        <Progress value={achievement.progress || 0} className="h-2" />
-                      </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="activity" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Your latest learning activities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                      <div className="mt-1">{activity.icon}</div>
-                      <div className="flex-1">
-                        <div className="font-medium text-slate-900 dark:text-white">{activity.title}</div>
-                        {activity.course && (
-                          <div className="text-sm text-slate-600 dark:text-slate-400">{activity.course}</div>
-                        )}
-                        <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">{activity.time}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
