@@ -20,7 +20,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
   const { user } = useAuth()
   const { isLessonComplete, getCourseProgress } = useProgress()
   const [mounted, setMounted] = useState(false)
-  
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -28,7 +28,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
   const totalLessons = course.modules.reduce((acc, module) => acc + module.lessons.length, 0) || course.lessons
   const courseProgress = mounted && user ? getCourseProgress(course.id.toString(), totalLessons) : { completed: 0, total: totalLessons, percentage: 0 }
 
-  let nextLessonId = null;
+  let nextLessonId: string | null = null;
   if (course.modules.length > 0) {
     for (const module of course.modules) {
       for (const lesson of module.lessons) {
@@ -47,7 +47,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
       <Navbar />
-      
+
       {/* Course Header */}
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -56,7 +56,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
             <ChevronRight className="w-4 h-4" />
             <span>{course.category}</span>
           </div>
-          
+
           <div className="grid lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 animate-fade-in-up">
               <div className="flex items-center space-x-4 mb-6">
@@ -69,7 +69,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
                   </div>
                 </div>
               </div>
-              
+
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-2xl">
                 {course.description}
               </p>
@@ -84,13 +84,13 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
                     </Link>
                   </Button>
                 ) : (
-                   <Button size="lg" className="text-lg h-12" disabled>
-                      Coming Soon
-                   </Button>
+                  <Button size="lg" className="text-lg h-12" disabled>
+                    Coming Soon
+                  </Button>
                 )}
               </div>
             </div>
-            
+
             <div className="animate-scale-in" style={{ animationDelay: '0.1s' }}>
               <Card className="bg-background/50 backdrop-blur border-border/60 shadow-lg hover-lift sticky top-24">
                 <CardHeader className="pb-4">
@@ -103,7 +103,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
                       <Progress value={courseProgress.percentage} className="h-2" />
                     </div>
                   )}
-                  
+
                   <div className="space-y-3 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <BookOpen className="w-4 h-4 mr-2 text-primary" />
@@ -115,7 +115,7 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4 text-sm">
                   <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
                     <span className="text-muted-foreground">Language</span>
@@ -156,39 +156,33 @@ export default function CourseDetailPage({ course }: CourseDetailPageProps) {
                     <div className="divide-y divide-border/50">
                       {module.lessons.map((lesson, lessonIndex) => {
                         const isCompleted = mounted && user ? isLessonComplete(course.id.toString(), lesson.id) : false
-                        
+
                         return (
-                          <Link 
-                            href={`/courses/${course.id}/${lesson.id}`} 
+                          <Link
+                            href={`/courses/${course.id}/${lesson.id}`}
                             key={lesson.id}
                             className="flex items-center p-4 hover:bg-secondary/10 transition-colors group"
                           >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border transition-colors ${
-                              isCompleted 
-                                ? 'bg-success/10 border-success text-success' 
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border transition-colors ${isCompleted
+                                ? 'bg-success/10 border-success text-success'
                                 : 'bg-background border-border text-muted-foreground group-hover:border-primary group-hover:text-primary'
-                            }`}>
+                              }`}>
                               {isCompleted ? <CheckCircle className="w-5 h-5" /> : <span className="text-xs font-medium">{lessonIndex + 1}</span>}
                             </div>
                             <div className="flex-1 min-w-0">
                               <span className={`text-sm font-medium block truncate ${isCompleted ? 'text-muted-foreground decoration-border' : 'text-foreground'}`}>
                                 {lesson.title}
                               </span>
-                              {lesson.duration && (
-                                <span className="text-xs text-muted-foreground mt-0.5 block">
-                                  {lesson.duration}
-                                </span>
-                              )}
                             </div>
-                            
+
                             <div className="ml-4">
-                               {isCompleted ? (
-                                 <Badge variant="secondary" className="bg-success/10 text-success hover:bg-success/20 border-none">Completed</Badge>
-                               ) : (
-                                 <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <Play className="w-4 h-4" />
-                                 </Button>
-                               )}
+                              {isCompleted ? (
+                                <Badge variant="secondary" className="bg-success/10 text-success hover:bg-success/20 border-none">Completed</Badge>
+                              ) : (
+                                <Button size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Play className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </Link>
                         )

@@ -8,7 +8,7 @@ export interface LessonContent {
   content: ReactNode
 }
 
-export const lessonData: Record<string, LessonContent> = {
+const initialLessons: Record<string, LessonContent> = {
   '1': {
     id: '1',
     title: "Getting Started with Excel",
@@ -26,7 +26,7 @@ export const lessonData: Record<string, LessonContent> = {
           <li><strong>Numbers:</strong> Counts, currency, percentages.</li>
           <li><strong>Formulas:</strong> Mathematical equations that calculate values based on other cells.</li>
         </ul>
-        
+
         <div className="bg-secondary/20 p-4 rounded-lg border-l-4 border-primary my-4">
           <strong>Key Terminology:</strong>
           <ul className="mt-2 space-y-1 text-sm">
@@ -46,7 +46,7 @@ export const lessonData: Record<string, LessonContent> = {
         <p>
           The <strong>Ribbon</strong> is the command bar located at the top of the Excel window. It organizes features into a series of tabs to help you find commands quickly.
         </p>
-        
+
         <h3 className="text-xl font-bold text-foreground mt-6">Main Tabs Explained</h3>
         <div className="grid gap-4 mt-4">
           <div className="p-4 border rounded-lg bg-card">
@@ -155,4 +155,33 @@ export const lessonData: Record<string, LessonContent> = {
       </div>
     )
   }
+}
+
+// Generate placeholders for lesson IDs 5 to 63 (covering all expanded courses)
+const extraLessons: Record<string, LessonContent> = Array.from({ length: 59 }, (_, i) => {
+  const id = String(i + 5)
+  return {
+    [id]: {
+      id,
+      title: "Lesson Content Coming Soon",
+      content: (
+        <div className="space-y-6 text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">🚧</span>
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-2">Content Under Construction</h3>
+            <p className="max-w-md text-muted-foreground">
+              We're currently crafting this lesson to ensure it meets our high standards. Check back soon!
+            </p>
+          </div>
+        </div>
+      )
+    }
+  }
+}).reduce((acc, curr) => ({ ...acc, ...curr }), {})
+
+export const lessonData: Record<string, LessonContent> = {
+  ...initialLessons,
+  ...extraLessons
 }

@@ -1,20 +1,17 @@
 // src/components/navbar.tsx
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { 
-  BookOpen, 
-  Menu, 
-  Search, 
-  User, 
-  LogIn, 
+import {
+  BookOpen,
+  Menu,
+  User,
+  LogIn,
   GraduationCap,
   LayoutDashboard,
   Trophy
@@ -22,18 +19,9 @@ import {
 import { useAuth } from '@/lib/auth'
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState('')
   const { user, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/courses?search=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
-    }
-  }
 
   const getInitials = (name: string) => {
     return name
@@ -65,31 +53,16 @@ export default function Navbar() {
             <span className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">Edvancea</span>
           </Link>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-            <form onSubmit={handleSearch} className="w-full relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                type="search"
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full bg-slate-100 dark:bg-slate-800Sv border-none focus-visible:ring-1"
-              />
-            </form>
-          </div>
-
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-6 flex-1 justify-center">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center space-x-1 text-sm font-medium transition-colors ${
-                  isActive(item.href) 
-                    ? 'text-blue-600 dark:text-blue-400' 
+                className={`flex items-center space-x-1 text-sm font-medium transition-colors ${isActive(item.href)
+                    ? 'text-blue-600 dark:text-blue-400'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <item.icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -100,7 +73,7 @@ export default function Navbar() {
           {/* Right side items */}
           <div className="flex items-center space-x-2 ml-4">
             <ThemeToggle />
-            
+
             <div className="hidden md:flex items-center space-x-2">
               {user ? (
                 <Link href="/profile">
@@ -132,29 +105,15 @@ export default function Navbar() {
               <SheetContent side="right" className="w-80">
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex flex-col h-full pt-4">
-                  <form onSubmit={handleSearch} className="mb-6">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                      <Input
-                        type="search"
-                        placeholder="Search courses..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 w-full"
-                      />
-                    </div>
-                  </form>
-
                   <nav className="space-y-2 flex-1">
                     {navItems.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          isActive(item.href) 
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                        className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(item.href)
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
+                          }`}
                       >
                         <item.icon className="w-4 h-4" />
                         <span>{item.label}</span>
@@ -186,8 +145,8 @@ export default function Navbar() {
                             Profile
                           </Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           className="w-full mt-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                           onClick={() => {
                             logout()

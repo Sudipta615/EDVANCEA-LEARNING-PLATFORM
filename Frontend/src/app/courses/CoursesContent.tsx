@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowRight, Filter, X, BookOpen, Tag, Layers } from 'lucide-react'
 import Navbar from '@/components/navbar'
-import { courseData } from '@/lib/courseData'
+import { fetchCourses, type Course } from '@/lib/api'
 
 export default function CoursesContent() {
   const searchParams = useSearchParams()
@@ -20,9 +20,19 @@ export default function CoursesContent() {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("newest")
   const [showFilters, setShowFilters] = useState(false)
+  const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Create array from the shared data object
-  const allCourses = useMemo(() => Object.values(courseData), [])
+  // Fetch courses from API on mount
+  useEffect(() => {
+    const loadCourses = async () => {
+      setLoading(true)
+      const courses = await fetchCourses()
+      setAllCourses(courses)
+      setLoading(false)
+    }
+    loadCourses()
+  }, [])
 
   useEffect(() => {
     setSearchTerm(searchParams.get('search') || '')
@@ -33,12 +43,12 @@ export default function CoursesContent() {
   const filteredCourses = useMemo(() => {
     let filtered = allCourses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           course.description.toLowerCase().includes(searchTerm.toLowerCase())
-      
+        course.description.toLowerCase().includes(searchTerm.toLowerCase())
+
       const matchesCategory = selectedCategory === "all" || course.category.toLowerCase() === selectedCategory.toLowerCase()
       const matchesLevel = selectedLevel === "all" || course.level.toLowerCase() === selectedLevel.toLowerCase()
-      const matchesFeatures = selectedFeatures.length === 0 || 
-                             selectedFeatures.some(feature => (course.features || []).includes(feature))
+      const matchesFeatures = selectedFeatures.length === 0 ||
+        selectedFeatures.some(feature => (course.features || []).includes(feature))
 
       return matchesSearch && matchesCategory && matchesLevel && matchesFeatures
     })
@@ -74,25 +84,39 @@ export default function CoursesContent() {
     searchTerm !== ""
   ].filter(Boolean).length
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background selection:bg-primary/20">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="text-4xl mb-4">📚</div>
+            <p className="text-muted-foreground">Loading courses...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
       <Navbar />
-      
+
       <div className="border-b border-border sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex items-center gap-2">
-               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                 <Layers className="w-5 h-5 text-primary" />
-                 Course Catalog
-               </h1>
-               {searchTerm && (
-                 <Badge variant="secondary" className="font-normal">
-                   Results for "{searchTerm}"
-                 </Badge>
-               )}
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Layers className="w-5 h-5 text-primary" />
+                Course Catalog
+              </h1>
+              {searchTerm && (
+                <Badge variant="secondary" className="font-normal">
+                  Results for "{searchTerm}"
+                </Badge>
+              )}
             </div>
-            
+
             <div className="flex items-center gap-3">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[160px] h-9">
@@ -213,14 +237,12 @@ export default function CoursesContent() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course, index) => (
               <Link key={course.id} href={`/courses/${course.id}`} className="group block h-full">
-                <Card 
-                  // Added py-4 and gap-4 to reduce default vertical padding/gap
+                <Card
                   className="h-full flex flex-col bg-card border-border/60 overflow-hidden relative hover-lift transition-all duration-300 py-4 gap-4"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                  
-                  {/* Reduced pb-4 to pb-2 */}
+
                   <CardHeader className="pb-2 border-b border-border/50 bg-secondary/30 relative z-10">
                     <div className="flex justify-between items-start mb-3">
                       <div className="text-3xl p-2.5 bg-background rounded-xl shadow-sm ring-1 ring-border/50 group-hover:scale-110 transition-transform duration-300">{course.image}</div>
@@ -237,15 +259,12 @@ export default function CoursesContent() {
                       </Badge>
                     </div>
                   </CardHeader>
-                  
-                  {/* Reduced pt-5 to pt-4 */}
+
                   <CardContent className="pt-4 flex-1 flex flex-col relative z-10">
-                    {/* Reduced line-clamp-3 to line-clamp-2 and mb-6 to mb-4 */}
                     <CardDescription className="line-clamp-2 mb-4 flex-1 text-sm leading-relaxed">
                       {course.description}
                     </CardDescription>
-                    
-                    {/* Reduced space-y-4 to space-y-3 */}
+
                     <div className="space-y-3 mt-auto">
                       <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                         <div className="flex items-center bg-secondary/50 px-2.5 py-1 rounded-md">

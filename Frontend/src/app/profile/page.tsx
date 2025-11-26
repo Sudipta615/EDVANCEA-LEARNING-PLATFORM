@@ -1,4 +1,4 @@
-import ProfilePage from "./page";
+import ProfilePage from "./ProfilePage";
 
 // Next.js needs this default export to know this is a route
 export default function Page() {

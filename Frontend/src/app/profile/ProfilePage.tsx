@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -14,11 +14,16 @@ import { useAuth } from '@/lib/auth'
 export default function ProfilePage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState('')
-  const { user, logout, deleteAccount } = useAuth()
+  const { user, logout, deleteAccount, isLoading } = useAuth()
   const router = useRouter()
 
+  useEffect(() => {
+    if (!user && !isLoading) {
+      router.push('/login')
+    }
+  }, [user, isLoading, router])
+
   if (!user) {
-    router.push('/login')
     return null
   }
 
@@ -36,13 +41,13 @@ export default function ProfilePage() {
     setError('')
 
     const success = await deleteAccount()
-    
+
     if (success) {
       router.push('/')
     } else {
       setError('Failed to delete account. Please try again.')
     }
-    
+
     setIsDeleting(false)
   }
 
@@ -111,9 +116,9 @@ export default function ProfilePage() {
                     <LogOut className="w-4 h-4 mr-2" />
                     Log Out
                   </Button>
-                  <Button 
-                    variant="destructive" 
-                    className="w-full" 
+                  <Button
+                    variant="destructive"
+                    className="w-full"
                     onClick={handleDeleteAccount}
                     disabled={isDeleting}
                   >
@@ -160,10 +165,10 @@ export default function ProfilePage() {
                   <div>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Member Since</label>
                     <div className="mt-1 p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
-                      {new Date(user.createdAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                      {new Date(user.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                       })}
                     </div>
                   </div>

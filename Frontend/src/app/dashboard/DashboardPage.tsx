@@ -12,19 +12,27 @@ import { BookOpen, CheckCircle, PlayCircle, Award, TrendingUp, Loader2 } from 'l
 import Navbar from '@/components/navbar'
 import { useAuth } from '@/lib/auth'
 import { useProgress } from '@/lib/progress'
-import { courseData } from '@/lib/courseData'
+import { fetchCourses, type Course } from '@/lib/api'
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const { user, isLoading } = useAuth()
   const { getCourseProgress, getOverallProgress } = useProgress()
   const [mounted, setMounted] = useState(false)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loadingCourses, setLoadingCourses] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    const loadCourses = async () => {
+      const data = await fetchCourses()
+      setCourses(data)
+      setLoadingCourses(false)
+    }
+    loadCourses()
   }, [])
 
-  if (!mounted || isLoading) {
+  if (!mounted || isLoading || loadingCourses) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -47,9 +55,9 @@ export default function DashboardPage() {
   }
 
   const overall = getOverallProgress()
-  
-  // Use data from source of truth
-  const myCourses = Object.values(courseData).map(course => {
+
+  // Use data from API
+  const myCourses = courses.map(course => {
     const progress = getCourseProgress(course.id.toString(), course.lessons)
     return { ...course, ...progress }
   })
@@ -60,7 +68,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
       <Navbar />
-      
+
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -96,7 +104,7 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="hover-lift border-l-4 border-l-success">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -108,7 +116,7 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="hover-lift border-l-4 border-l-accent">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
